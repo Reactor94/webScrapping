@@ -4,7 +4,11 @@ const urlParser = require('url');
 const moviesScrapper = require('./index');
 const queryString = require('query-string');
 
+moviesScrapper.scrapper();
+const data = fs.readFileSync('movies.json');
+
 const server = http.createServer((req, res) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
   if (req.url === '/') {
     res.setHeader('Content-Type', 'text/html');
     res.write('<html>');
@@ -19,8 +23,6 @@ const server = http.createServer((req, res) => {
   if (path.pathname === '/movies') {
     const params = queryString.parse(path.query);
 
-    moviesScrapper.scrapper();
-    const data = fs.readFileSync('movies.json');
     let jsonContent = JSON.parse(data);
 
     if (params.fromYear) {
@@ -35,13 +37,8 @@ const server = http.createServer((req, res) => {
       jsonContent = jsonContent.filter(el => el.movieRate >= params.fromRating);
     }
 
-    if (params.searchName) {
-        
-        // jsonContent = jsonContent.filter(el => el.movieName === el.movieName.includes(el.movieName));
-        jsonContent = jsonContent.filter(function(el){
-            return el.movieName == params.searchName;
-        });
-       
+    if (params.name) {
+      jsonContent = jsonContent.filter(el => el.movieName == params.name);
     }
 
     res.setHeader('Content-Type', 'application/json');
@@ -51,4 +48,4 @@ const server = http.createServer((req, res) => {
   }
 });
 
-server.listen(3000);
+server.listen(4000);

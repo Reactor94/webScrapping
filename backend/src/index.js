@@ -30,8 +30,4 @@ const websiteUrl = 'https://www.imdb.com/chart/top?ref_=ft_250';
 
 });
 
-// const data = fs.readFile('movies.json');
-// const jsonContent = JSON.parse(data);
-// // const moviesNameArray = jsonContent.map(el => el.movieName);
-// const moviesRate = jsonContent.map(el => el.movieRate)
 module.exports = {scrapper};
