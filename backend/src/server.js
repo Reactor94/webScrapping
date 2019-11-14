@@ -1,51 +1,45 @@
-const http = require('http');
 const fs = require('fs');
-const urlParser = require('url');
 const moviesScrapper = require('./index');
-const queryString = require('query-string');
+const express = require('express');
+const app = express();
+const path = require('path');
+const cors = require('cors');
+require('../src/database/database');
+const config = require('../src/config/config');
 
+app.use(cors());
 moviesScrapper.scrapper();
-const data = fs.readFileSync('movies.json');
+const data = fs.readFileSync(path.join(__dirname, 'public/movies.json'));
 
-const server = http.createServer((req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  if (req.url === '/') {
-    res.setHeader('Content-Type', 'text/html');
-    res.write('<html>');
-    res.write('<head><title>My movies</title></head>');
-    res.write('<body>Hello</body>');
-    res.write('</html>');
-    res.end();
+app.use(express.static(path.join(__dirname, '../../frontend/build')));
+app.use('/static', express.static(path.join(__dirname, 'public')));
+app.get('/movies', (req, resp, next) => {
+  let jsonContent = JSON.parse(data);
+
+  if (req.query.fromYear) {
+    jsonContent = jsonContent.filter(el => el.movieYear > req.query.fromYear);
   }
 
-  const path = urlParser.parse(req.headers.host + req.url);
-
-  if (path.pathname === '/movies') {
-    const params = queryString.parse(path.query);
-
-    let jsonContent = JSON.parse(data);
-
-    if (params.fromYear) {
-      jsonContent = jsonContent.filter(el => el.movieYear > params.fromYear);
-    }
-
-    if (params.movieYear) {
-      jsonContent = jsonContent.filter(el => el.movieYear == params.movieYear);
-    }
-
-    if (params.fromRating) {
-      jsonContent = jsonContent.filter(el => el.movieRate >= params.fromRating);
-    }
-
-    if (params.name) {
-      jsonContent = jsonContent.filter(el => el.movieName == params.name);
-    }
-
-    res.setHeader('Content-Type', 'application/json');
-    res.write(JSON.stringify(jsonContent));
-
-    res.end();
+  if (req.query.movieYear) {
+    jsonContent = jsonContent.filter(el => el.movieYear == req.query.movieYear);
   }
+
+  if (req.query.fromRating) {
+    jsonContent = jsonContent.filter(
+      el => el.movieRate >= req.query.fromRating,
+    );
+  }
+
+  if (req.query.name) {
+    jsonContent = jsonContent.filter(el => el.movieName == req.query.name);
+  }
+
+  resp.send(jsonContent);
+  next();
 });
 
-server.listen(4000);
+console.log(process.env.MONGODB_USER);
+
+app.listen(config.PORT, () => {
+  console.log(config.PORT);
+});
